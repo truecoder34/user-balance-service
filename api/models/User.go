@@ -41,7 +41,7 @@ func (user *User) Validate() error {
 	}
 
 	if err := checkmail.ValidateFormat(user.Email); err != nil {
-		return errors.New("Invalid Email")
+		return errors.New("invalid email")
 	}
 	if user.PhoneNumber == "" {
 		return errors.New("phone number data is required;")
