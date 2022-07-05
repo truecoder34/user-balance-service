@@ -49,3 +49,4 @@ go get gopkg.in/go-playground/assert.v1
 
 go get github.com/satori/go.uuid
 go get github.com/badoux/checkmail
+go get github.com/gin-gonic/gin

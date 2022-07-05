@@ -13,8 +13,8 @@ import (
 
 type User struct {
 	Entity
-	Name        string `gorm:"size:255;not null;unique" json:"name"`
-	Surname     string `gorm:"size:255;not null;unique" json:"surname"`
+	Name        string `gorm:"size:255;not null;" json:"name"`
+	Surname     string `gorm:"size:255;not null;" json:"surname"`
 	Nickname    string `gorm:"size:255;not null;unique" json:"nickname"`
 	Email       string `gorm:"size:100;not null;unique" json:"email"`
 	PhoneNumber string `gorm:"size:100;not null;unique" json:"phone_number"`
@@ -54,6 +54,9 @@ func (user *User) Validate() error {
 */
 func (user *User) SaveUser(db *gorm.DB) (*User, error) {
 	var err error
+	/*
+		TODO : add account creation
+	*/
 	err = db.Debug().Create(&user).Error
 	if err != nil {
 		return &User{}, err

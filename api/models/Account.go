@@ -11,16 +11,19 @@ import (
 
 type Account struct {
 	Entity
-	Account     User      `json:"account"`
-	UserID      uuid.UUID `gorm:"not null" json:"user_id"`
-	MoneyAmount uint64    `gorm:"not null" json:"money_amount"`
-	Comment     string    `gorm:"size:255;" json:"comment"`
+	Account       User      `json:"account"`
+	AccountNumber string    `gorm:"size:22;" json:"account_number"`
+	UserID        uuid.UUID `gorm:"not null" json:"user_id"`
+	MoneyAmount   uint64    `gorm:"not null;" json:"money_amount"`
+	Comment       string    `gorm:"size:255;" json:"comment"`
 }
 
 func (account *Account) Prepare() {
 	account.Entity = Entity{}
 	account.MoneyAmount = 0
+	account.AccountNumber = "" // TODO GENERATE 16 or 20 numbers account number
 	account.Comment = html.EscapeString(strings.TrimSpace(account.Comment))
+	account.Account = User{}
 }
 
 /*
@@ -48,9 +51,12 @@ func (account *Account) UpdateAccountBalance(db *gorm.DB, newAmount int64) (*Acc
 	var err error
 	account.MoneyAmount = uint64(newAmount)
 	account.Comment = html.EscapeString(strings.TrimSpace(account.Comment))
+	account.AccountNumber = html.EscapeString(strings.TrimSpace(account.AccountNumber))
+
 	err = db.Debug().Model(&User{}).Where("id = ?", account.ID).Updates(Account{
-		MoneyAmount: account.MoneyAmount,
-		Comment:     account.Comment,
+		MoneyAmount:   account.MoneyAmount,
+		Comment:       account.Comment,
+		AccountNumber: account.AccountNumber,
 		// UpdatedAt : time.Now(),
 	}).Error
 	if err != nil {
@@ -68,11 +74,39 @@ func (account *Account) FindAllAccounts(db *gorm.DB) (*[]Account, error) {
 	if err != nil {
 		return &[]Account{}, err
 	}
+	if len(acs) > 0 {
+		for i, _ := range acs {
+			err := db.Debug().Model(&User{}).Where("id = ?", acs[i].UserID).Take(&acs[i].Account).Error
+			if err != nil {
+				return &[]Account{}, err
+			}
+		}
+	}
+
 	return &acs, nil
 }
 
 /*
-	TODO: Get all accounts in DB by USER UD
+	TODO: Get accounts in DB by USER UD
+*/
+
+/*
+	Find Account By ID
+*/
+func (account *Account) FindAccountByID(db *gorm.DB, aid uuid.UUID) (*Account, error) {
+	var err error
+	err = db.Debug().Model(Account{}).Where("id = ?", aid).Take(&account).Error
+	if err != nil {
+		return &Account{}, err
+	}
+	if gorm.IsRecordNotFoundError(err) {
+		return &Account{}, errors.New("Account was not Found")
+	}
+	return account, err
+}
+
+/*
+	TODO: Get account in DB by ACCOUNT NUMBER
 */
 
 /*
