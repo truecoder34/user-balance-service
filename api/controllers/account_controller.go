@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
+	dtos "github.com/truecoder34/user-balance-service/api/DTOs"
 	"github.com/truecoder34/user-balance-service/api/models"
 	"github.com/truecoder34/user-balance-service/api/responses"
 	"github.com/truecoder34/user-balance-service/api/utils/formaterror"
@@ -66,14 +67,51 @@ func (server *Server) GetAccount(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
-
 	ac := models.Account{}
-	acRecieved, err := ac.FindAccountByID(server.DB, aid)
+	acReceived, err := ac.FindAccountByID(server.DB, aid)
 	if err != nil {
 		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
-	responses.JSON(w, http.StatusOK, acRecieved)
+	responses.JSON(w, http.StatusOK, acReceived)
+}
+
+/*
+	POST - ADD money to user account by USER ID
+	{
+		user_id
+		money_amount
+		action
+	}
+*/
+func (server *Server) AddRemoveMoney(w http.ResponseWriter, r *http.Request) {
+	account := models.Account{}
+	actionDTO := dtos.ActionDTO{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	err = json.Unmarshal(body, &actionDTO)
+	if err != nil {
+		// if error is not nil
+		fmt.Println(err)
+	}
+	// change to update account balance
+	//acReceived, err := account.FindAccountByUserID(server.DB, actionDTO.UserID)
+	acReceived, err := account.UpdateAccountBalance(server.DB, actionDTO)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	responses.JSON(w, http.StatusCreated, acReceived)
+}
+
+/*
+	POST
+	ADD money to user account by USER ID
+*/
+func (server *Server) TransferMoney(w http.ResponseWriter, r *http.Request) {
 
 }
 
