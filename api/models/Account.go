@@ -4,6 +4,7 @@ import (
 	"errors"
 	"html"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
@@ -50,32 +51,38 @@ func (account *Account) SaveAccount(db *gorm.DB) (*Account, error) {
 */
 func (account *Account) UpdateAccountBalance(db *gorm.DB, action dtos.ActionDTO) (*Account, error) {
 	var err error
-	// ac := Account{}
-	// err = db.Debug().Model(Account{}).Where("user_id = ?", action.UserID).Find(&ac).Error
-	// if err != nil {
-	// 	return &Account{}, err
-	// }
 
-	// if action.Action {
+	var actionPattern string
+	if action.Action {
+		actionPattern = "money_amount + ?"
+	} else {
+		actionPattern = "money_amount - ?"
+	}
 
-	// }
-	// else {
+	db = db.Debug().Model(&Account{}).Where("user_id = ?", action.UserID).Take(&Account{}).UpdateColumns(
+		map[string]interface{}{
+			"money_amount": gorm.Expr(actionPattern, action.MoneyAmount),
+			"updated_at":   time.Now(),
+		},
+	)
+	if db.Error != nil {
+		return &Account{}, db.Error
+	}
 
-	// }
-
-	//account.MoneyAmount = html.EscapeString(strings.TrimSpace(account.MoneyAmount))
-	account.Comment = html.EscapeString(strings.TrimSpace(account.Comment))
-	account.AccountNumber = html.EscapeString(strings.TrimSpace(account.AccountNumber))
-
-	err = db.Debug().Model(&User{}).Where("user_id = ?", action.UserID).Updates(Account{
-		MoneyAmount:   account.MoneyAmount + action.MoneyAmount,
-		Comment:       account.Comment,
-		AccountNumber: account.AccountNumber,
-		// UpdatedAt : time.Now(),
-	}).Error
+	// This is the display the updated user
+	err = db.Debug().Model(&Account{}).Where("user_id = ?", action.UserID).Take(account).Error
 	if err != nil {
 		return &Account{}, err
 	}
+
+	// 	FIX. FAILS . why user_id still in where
+	if account != nil {
+		err := db.Debug().Model(&User{}).Where("id = ?", action.UserID).Take(account.Account).Error
+		if err != nil {
+			return &Account{}, err
+		}
+	}
+
 	return account, nil
 }
 
