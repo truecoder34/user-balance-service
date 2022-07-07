@@ -6,8 +6,11 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
+	//"github.com/jinzhu/gorm"
+
 	"github.com/truecoder34/user-balance-service/api/models"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
@@ -32,7 +35,8 @@ func (server *Server) Initialize(Dbdriver, DbUser, DbPassword, DbPort, DbHost, D
 	// }
 	if Dbdriver == "postgres" {
 		DBURL := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s", DbHost, DbPort, DbUser, DbName, DbPassword)
-		server.DB, err = gorm.Open(Dbdriver, DBURL)
+		server.DB, err = gorm.Open(postgres.Open(DBURL), &gorm.Config{})
+		//server.DB, err = gorm.Open(Dbdriver, DBURL)
 		if err != nil {
 			fmt.Printf("Cannot connect to %s database", Dbdriver)
 			log.Fatal("This is the error:", err)

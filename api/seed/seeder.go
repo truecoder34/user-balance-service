@@ -1,10 +1,8 @@
 package seed
 
 import (
-	"log"
-
-	"github.com/jinzhu/gorm"
 	"github.com/truecoder34/user-balance-service/api/models"
+	"gorm.io/gorm"
 )
 
 var users = []models.User{
@@ -50,31 +48,29 @@ var accounts = []models.Account{
 }
 
 func Load(db *gorm.DB) {
-
-	err := db.Debug().DropTableIfExists(&models.Account{}, &models.User{}).Error
-	if err != nil {
-		log.Fatalf("cannot drop table: %v", err)
-	}
-	err = db.Debug().AutoMigrate(&models.Account{}, &models.User{}).Error
-	if err != nil {
-		log.Fatalf("cannot migrate table: %v", err)
-	}
-
-	err = db.Debug().Model(&models.Account{}).AddForeignKey("user_id", "users(id)", "cascade", "cascade").Error
-	if err != nil {
-		log.Fatalf("attaching foreign key error: %v", err)
+	//var err error
+	//	err := db.Debug().DropTableIfExists(&models.Account{}, &models.User{}).Error
+	if db.Migrator().HasTable(&models.User{}) && db.Migrator().HasTable(&models.Account{}) {
+		db.Debug().Migrator().DropTable("users", "accounts")
+		// if err != "" {
+		// 	log.Fatalf("cannot drop table: %v", err)
+		// }
+		db.Debug().AutoMigrate(&models.User{}, &models.Account{})
+		// if err != nil {
+		// 	log.Fatalf("cannot migrate table: %v", err)
+		// }
 	}
 
 	for i, _ := range users {
-		err = db.Debug().Model(&models.User{}).Create(&users[i]).Error
-		if err != nil {
-			log.Fatalf("cannot seed users table: %v", err)
-		}
+		db.Debug().Model(&models.User{}).Create(&users[i])
+		// if err != nil {
+		// 	log.Fatalf("cannot seed users table: %v", err)
+		// }
 		accounts[i].UserID = users[i].ID
 
-		err = db.Debug().Model(&models.Account{}).Create(&accounts[i]).Error
-		if err != nil {
-			log.Fatalf("cannot seed posts table: %v", err)
-		}
+		db.Debug().Model(&models.Account{}).Create(&accounts[i])
+		// if err != nil {
+		// 	log.Fatalf("cannot seed posts table: %v", err)
+		// }
 	}
 }
