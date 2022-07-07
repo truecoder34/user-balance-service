@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/badoux/checkmail"
-	"github.com/jinzhu/gorm"
+	//"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -86,9 +87,10 @@ func (user *User) FindUserByID(db *gorm.DB, uid uuid.UUID) (*User, error) {
 	if err != nil {
 		return &User{}, err
 	}
-	if gorm.IsRecordNotFoundError(err) {
-		return &User{}, errors.New("User Not Found")
-	}
+	//gorm.ErrRecordNotFound
+	// if gorm.IsRecordNotFoundError(err) {
+	// 	return &User{}, errors.New("User Not Found")
+	// }
 	return user, err
 }
 
