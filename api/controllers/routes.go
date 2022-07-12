@@ -19,4 +19,5 @@ func (s *Server) initializeRoutes() {
 	// money transfers
 	s.Router.HandleFunc("/money", middlewares.SetMiddlewareJSON(s.AddRemoveMoney)).Methods("POST")
 	s.Router.HandleFunc("/money-transfer", middlewares.SetMiddlewareJSON(s.TransferMoney)).Methods("POST")
+	s.Router.HandleFunc("/balance", middlewares.SetMiddlewareJSON(s.GetBalance)).Methods("GET")
 }
