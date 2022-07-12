@@ -11,6 +11,7 @@ import (
 	dtos "github.com/truecoder34/user-balance-service/api/DTOs"
 	"github.com/truecoder34/user-balance-service/api/models"
 	"github.com/truecoder34/user-balance-service/api/responses"
+	currency "github.com/truecoder34/user-balance-service/api/utils"
 	"github.com/truecoder34/user-balance-service/api/utils/formaterror"
 )
 
@@ -140,6 +141,39 @@ func (server *Server) TransferMoney(w http.ResponseWriter, r *http.Request) {
 	transferData.NewMoneyAmountSender = acSend.MoneyAmount
 	responses.JSON(w, http.StatusCreated, transferData)
 
+}
+
+/*
+	GET -  Get balance by user ID and currency
+*/
+func (server *Server) GetBalance(w http.ResponseWriter, r *http.Request) {
+	account := models.Account{}
+	balanceDTO := dtos.BalanceDTO{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	err = json.Unmarshal(body, &balanceDTO)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	ac, err := account.GetAccountBalance(server.DB, balanceDTO.UserID)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if balanceDTO.Currency == "RUB" {
+		responses.JSON(w, http.StatusFound, ac.MoneyAmount)
+	} else if balanceDTO.Currency == "USD" {
+		var result float64 = currency.ConvertFromRub(int64(ac.MoneyAmount), "USD")
+		responses.JSON(w, http.StatusFound, result)
+
+	} else {
+		responses.JSON(w, http.StatusBadRequest, "Unsupported currency requested")
+	}
 }
 
 func (server *Server) UpdateAccount(w http.ResponseWriter, r *http.Request) {

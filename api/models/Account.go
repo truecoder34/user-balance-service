@@ -124,6 +124,20 @@ func (account *Account) TransferMoneyBetweenAccounts(db *gorm.DB, transfer dtos.
 }
 
 /*
+	Get balance of user  by it ID
+*/
+func (account *Account) GetAccountBalance(db *gorm.DB, uid uuid.UUID) (*Account, error) {
+	var err error
+	ac := Account{}
+	err = db.Debug().Model(Account{}).Where("user_id = ?", uid).Find(&ac).Error
+	if err != nil {
+		return &Account{}, err
+	}
+
+	return &ac, nil
+}
+
+/*
 	Get all accounts in DB
 */
 func (account *Account) FindAllAccounts(db *gorm.DB) (*[]Account, error) {
