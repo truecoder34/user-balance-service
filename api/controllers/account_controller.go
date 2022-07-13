@@ -20,18 +20,18 @@ import (
 		[INPUT] - json body
 */
 func (server *Server) CreateAccount(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+
+	vars := mux.Vars(r)
+	uid, err := uuid.FromString(vars["id"])
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
+
 	account := models.Account{}
-	err = json.Unmarshal(body, account)
-	if err != nil {
-		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-		return
-	}
 	account.Prepare()
+
+	account.UserID = uid
 
 	acCreated, err := account.SaveAccount(server.DB)
 	if err != nil {
@@ -39,7 +39,6 @@ func (server *Server) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
 		return
 	}
-	w.Header().Set("Lacation", fmt.Sprintf("%s%s/%d", r.Host, r.URL.Path, acCreated.ID))
 	responses.JSON(w, http.StatusCreated, acCreated)
 }
 
@@ -168,8 +167,13 @@ func (server *Server) GetBalance(w http.ResponseWriter, r *http.Request) {
 	if balanceDTO.Currency == "RUB" {
 		responses.JSON(w, http.StatusFound, ac.MoneyAmount)
 	} else if balanceDTO.Currency == "USD" {
-		var result float64 = currency.ConvertFromRub(int64(ac.MoneyAmount), "USD")
-		responses.JSON(w, http.StatusFound, result)
+		result := make(chan float64, 1)
+		go currency.ConvertFromRub(int64(ac.MoneyAmount), "USD", result)
+
+		value := <-result
+		close(result)
+
+		responses.JSON(w, http.StatusFound, value)
 
 	} else {
 		responses.JSON(w, http.StatusBadRequest, "Unsupported currency requested")

@@ -68,15 +68,7 @@ curl --location --request GET 'http://localhost:8080/accounts'
 
 [POST] create account
 ```
-curl --location --request POST 'http://localhost:8080/accounts' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "name": "Timothée",
-    "surname": "Chalamet",
-    "nickname": "SweetBoy",
-    "email": "tc-sweet@gmail.com",
-    "phone_number": "+14471231234"
-}'
+    curl --location --request POST 'http://localhost:8080/accounts/2c294273-e10e-41f1-947a-ff4de0baad77'
 ```
 
 [POST] - transfer data between accounts 

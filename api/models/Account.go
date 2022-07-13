@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	//"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
 	dtos "github.com/truecoder34/user-balance-service/api/DTOs"
+	"github.com/truecoder34/user-balance-service/api/helpers"
 	"gorm.io/gorm"
 )
 
@@ -24,22 +24,23 @@ type Account struct {
 func (account *Account) Prepare() {
 	account.Entity = Entity{}
 	account.MoneyAmount = 0
-	account.AccountNumber = "" // TODO: GENERATE 16 or 20 numbers account number
+	res := helpers.GenerateAccountNumber() // TODO: Make generation more clever
+	account.AccountNumber = res
 	account.Comment = html.EscapeString(strings.TrimSpace(account.Comment))
-	account.Account = User{}
 }
 
 /*
 	Save new wallet
 */
 func (account *Account) SaveAccount(db *gorm.DB) (*Account, error) {
+	tx := db.Debug().Model(&Account{}).Session(&gorm.Session{})
 	var err error
-	err = db.Debug().Model(&Account{}).Create(&account).Error
+	err = tx.Create(&account).Error
 	if err != nil {
 		return &Account{}, err
 	}
 	if account.ID != uuid.Nil {
-		err = db.Debug().Model(&Account{}).Where("id = ?", account.UserID).Take(&account.Account).Error
+		err = db.Debug().Model(&User{}).Where("id = ?", account.UserID).Take(&account.Account).Error
 		if err != nil {
 			return &Account{}, err
 		}
@@ -53,7 +54,6 @@ func (account *Account) SaveAccount(db *gorm.DB) (*Account, error) {
 func (account *Account) UpdateAccountBalance(db *gorm.DB, action dtos.ActionDTO) (*Account, error) {
 	var err error
 	tx := db.Debug().Model(&Account{}).Session(&gorm.Session{})
-	//tx_user := db.Debug().Model(&User{}).Session(&gorm.Session{})
 	var actionPattern string
 	if action.Action {
 		actionPattern = "money_amount + ?"
