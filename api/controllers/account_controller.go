@@ -77,6 +77,26 @@ func (server *Server) GetAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
+	GET - Get account by user id
+		[INPUT] - param ID
+*/
+func (server *Server) GetAccountByUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	uid, err := uuid.FromString(vars["id"])
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	ac := models.Account{}
+	acReceived, err := ac.FindAccountByUserID(server.DB, uid)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	responses.JSON(w, http.StatusOK, acReceived)
+}
+
+/*
 	POST - ADD money to user account by USER ID
 	INPUT : ActionDTO
 	{

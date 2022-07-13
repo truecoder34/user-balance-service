@@ -61,9 +61,14 @@ curl --location --request POST 'http://localhost:8080/users' \
     curl --location --request GET 'http://localhost:8080/accounts'
 ```
 
-[GET] get account data by USER ID 
+[GET] get account data by ACCOUNT ID
 ```
-curl --location --request GET 'http://localhost:8080/accounts'
+curl --location --request GET 'http://localhost:8080/accounts/c85a10c3-1be8-4b01-8362-b1821513bddc'
+```
+
+[GET] get account data by USER ID
+```
+curl --location --request GET 'http://localhost:8080/accounts-user/c85a10c3-1be8-4b01-8362-b1821513bddc'
 ```
 
 [POST] create account
