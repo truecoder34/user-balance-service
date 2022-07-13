@@ -11,7 +11,7 @@ import (
 	dtos "github.com/truecoder34/user-balance-service/api/DTOs"
 )
 
-func ConvertFromRub(value int64, currencyConvertTo string) float64 {
+func ConvertFromRub(value int64, currencyConvertTo string, result chan float64) {
 	url := "https://api.apilayer.com/exchangerates_data/convert?to=" + currencyConvertTo + "&from=RUB&amount=" + strconv.Itoa(int(value))
 
 	client := &http.Client{}
@@ -32,6 +32,5 @@ func ConvertFromRub(value int64, currencyConvertTo string) float64 {
 	json.Unmarshal(body, &exchangeRates)
 	fmt.Println(exchangeRates)
 
-	return exchangeRates.Result
-
+	result <- exchangeRates.Result
 }

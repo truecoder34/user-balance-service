@@ -1,13 +1,14 @@
 package models
 
 import (
+	"errors"
 	"html"
 	"strings"
 	"time"
 
-	//"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
 	dtos "github.com/truecoder34/user-balance-service/api/DTOs"
+	"github.com/truecoder34/user-balance-service/api/helpers"
 	"gorm.io/gorm"
 )
 
@@ -24,22 +25,23 @@ type Account struct {
 func (account *Account) Prepare() {
 	account.Entity = Entity{}
 	account.MoneyAmount = 0
-	account.AccountNumber = "" // TODO: GENERATE 16 or 20 numbers account number
+	res := helpers.GenerateAccountNumber() // TODO: Make generation more clever
+	account.AccountNumber = res
 	account.Comment = html.EscapeString(strings.TrimSpace(account.Comment))
-	account.Account = User{}
 }
 
 /*
 	Save new wallet
 */
 func (account *Account) SaveAccount(db *gorm.DB) (*Account, error) {
+	tx := db.Debug().Model(&Account{}).Session(&gorm.Session{})
 	var err error
-	err = db.Debug().Model(&Account{}).Create(&account).Error
+	err = tx.Create(&account).Error
 	if err != nil {
 		return &Account{}, err
 	}
 	if account.ID != uuid.Nil {
-		err = db.Debug().Model(&Account{}).Where("id = ?", account.UserID).Take(&account.Account).Error
+		err = db.Debug().Model(&User{}).Where("id = ?", account.UserID).Take(&account.Account).Error
 		if err != nil {
 			return &Account{}, err
 		}
@@ -53,7 +55,6 @@ func (account *Account) SaveAccount(db *gorm.DB) (*Account, error) {
 func (account *Account) UpdateAccountBalance(db *gorm.DB, action dtos.ActionDTO) (*Account, error) {
 	var err error
 	tx := db.Debug().Model(&Account{}).Session(&gorm.Session{})
-	//tx_user := db.Debug().Model(&User{}).Session(&gorm.Session{})
 	var actionPattern string
 	if action.Action {
 		actionPattern = "money_amount + ?"
@@ -162,16 +163,14 @@ func (account *Account) FindAllAccounts(db *gorm.DB) (*[]Account, error) {
 	Get accounts in DB by USER UD
 */
 func (account *Account) FindAccountByUserID(db *gorm.DB, uid uuid.UUID) (*Account, error) {
-	var err error
-	ac := Account{}
-	err = db.Debug().Model(Account{}).Where("user_id = ?", uid).Find(&ac).Error
-	if err != nil {
+	err := db.Debug().Model(Account{}).Where("user_id = ?", uid).Take(&account).Error
+	if gorm.ErrRecordNotFound == err {
+		return &Account{}, errors.New("account entity not found in database")
+	} else if err != nil {
 		return &Account{}, err
 	}
-	// if gorm.IsRecordNotFoundError(err) {
-	// 	return &Account{}, errors.New("Account was not Found")
-	// }
-	return &ac, nil
+
+	return account, nil
 }
 
 /*
@@ -180,12 +179,12 @@ func (account *Account) FindAccountByUserID(db *gorm.DB, uid uuid.UUID) (*Accoun
 func (account *Account) FindAccountByID(db *gorm.DB, aid uuid.UUID) (*Account, error) {
 	var err error
 	err = db.Debug().Model(Account{}).Where("id = ?", aid).Take(&account).Error
-	if err != nil {
+	if gorm.ErrRecordNotFound == err {
+		return &Account{}, errors.New("account entity not found in database")
+	} else if err != nil {
 		return &Account{}, err
 	}
-	// if gorm.IsRecordNotFoundError(err) {
-	// 	return &Account{}, errors.New("Account was not Found")
-	// }
+
 	return account, err
 }
 
@@ -195,12 +194,11 @@ func (account *Account) FindAccountByID(db *gorm.DB, aid uuid.UUID) (*Account, e
 func (account *Account) FindAccountByAccountNumber(db *gorm.DB, accountNumber string) (*Account, error) {
 	var err error
 	err = db.Debug().Model(Account{}).Where("account_number = ?", accountNumber).Take(&account).Error
-	if err != nil {
+	if gorm.ErrRecordNotFound == err {
+		return &Account{}, errors.New("account entity not found in database")
+	} else if err != nil {
 		return &Account{}, err
 	}
-	// if gorm.IsRecordNotFoundError(err) {
-	// 	return &Account{}, errors.New("Account was not Found")
-	// }
 	return account, err
 }
 
@@ -211,8 +209,11 @@ func (account *Account) DeleteAccount(db *gorm.DB, id uuid.UUID) (int64, error) 
 	db = db.Debug().Model(&Account{}).Where("id = ?", id).Take(&Account{}).Delete(&Account{})
 
 	if db.Error != nil {
+		if gorm.ErrRecordNotFound == db.Error {
+			return 0, errors.New("account entity not found in database")
+		}
 		// if gorm.IsRecordNotFoundError(db.Error) {
-		// 	return 0, errors.New("account entity not found in database")
+		//
 		// }
 		return 0, db.Error
 	}

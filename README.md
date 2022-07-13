@@ -61,22 +61,19 @@ curl --location --request POST 'http://localhost:8080/users' \
     curl --location --request GET 'http://localhost:8080/accounts'
 ```
 
-[GET] get account data by USER ID 
+[GET] get account data by ACCOUNT ID
 ```
-curl --location --request GET 'http://localhost:8080/accounts'
+curl --location --request GET 'http://localhost:8080/accounts/c85a10c3-1be8-4b01-8362-b1821513bddc'
+```
+
+[GET] get account data by USER ID
+```
+curl --location --request GET 'http://localhost:8080/accounts-user/c85a10c3-1be8-4b01-8362-b1821513bddc'
 ```
 
 [POST] create account
 ```
-curl --location --request POST 'http://localhost:8080/accounts' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "name": "Timothée",
-    "surname": "Chalamet",
-    "nickname": "SweetBoy",
-    "email": "tc-sweet@gmail.com",
-    "phone_number": "+14471231234"
-}'
+    curl --location --request POST 'http://localhost:8080/accounts/2c294273-e10e-41f1-947a-ff4de0baad77'
 ```
 
 [POST] - transfer data between accounts 
