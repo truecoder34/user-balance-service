@@ -153,6 +153,20 @@ comment
 
 
 
+## RUN
+```
+docker-compose up 
+docker-compose up --build
+```
+After changes in ```.env``` use ```docker-compose up``` with ```--build``` option
+
+
+```
+docker-compose down
+docker-compose down --remove-orphans --volumes 
+```
+
+
 ### GO MODULES 
 >go mod init github.com/truecoder34/user-balance-service<br>
 >go get github.com/badoux/checkmail<br>
